@@ -1,0 +1,19 @@
+things": [
+        {
+            "name": "Cihan",
+            "age": 28
+        },
+        {
+            "city": "Istanbul",
+            "country": "Turkey"
+        },
+        {
+            "name": "Kerim",
+            "age": 35
+        },
+        {
+            "city": "Istanbul",
+            "country": "Turkey"
+        }
+    ]
+}
