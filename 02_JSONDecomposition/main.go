@@ -1,0 +1,180 @@
+package main
+ 
+import (
+    "encoding/json"
+    "fmt"
+    "strconv"
+)
+ 
+var jsonStr = []byte(`
+{
+    "things": [
+        {
+            "name": "Cihan",
+            "age": 28
+        },
+        {
+            "city": "Istanbul",
+            "country": "Turkey"
+        },
+        {
+            "name": "Kerim",
+            "age": 35
+        },
+        {
+            "city": "Istanbul",
+            "country": "Turkey"
+        }
+    ]
+}`)
+ 
+func main() {
+ 
+    fmt.Println("**** Yöntem 1 ****")
+ 
+    personsA, placesA := SolutionOne(jsonStr)
+    fmt.Printf("%d %d\n", len(personsA), len(placesA))
+ 
+    fmt.Println("\n**** Yöntem 2 ****")
+ 
+    personsB, placesB := SolutionTwo(jsonStr)
+    fmt.Printf("Len : %d \nLen : %d\n\n", len(personsB), len(placesB))
+ 
+    fmt.Println("-> Person Info")
+    for _, per := range personsB {
+        fmt.Println(per.Name + " " + strconv.Itoa(per.Age))
+    }
+    fmt.Println("-> Place Info")
+    for _, pla := range placesB {
+        fmt.Println(pla.City + " " + pla.Country)
+    }
+ 
+    fmt.Println("\n**** Yöntem 3 ****")
+ 
+    personsC, placesC := SolutionThree(jsonStr)
+    fmt.Printf("%d %d\n", len(personsC), len(placesC))
+}
+ 
+type Person struct {
+    Name string
+    Age  int
+}
+ 
+type Place struct {
+    City    string
+    Country string
+}
+ 
+// Yöntem 1 : 'map' ve 'type assertion'
+ 
+func SolutionOne(jsonStr []byte) ([]Person, []Place) {
+    persons := []Person{}
+    places := []Place{}
+    var data map[string][]map[string]interface{}
+    err := json.Unmarshal(jsonStr, &data)
+    if err != nil {
+        fmt.Println(err)
+        return persons, places
+    }
+ 
+    for i := range data["things"] {
+        item := data["things"][i]
+        if item["name"] != nil {
+            persons = addPerson(persons, item)
+        } else {
+            places = addPlace(places, item)
+        }
+ 
+    }
+    return persons, places
+}
+ 
+func addPerson(persons []Person, item map[string]interface{}) []Person {
+    name, _ := item["name"].(string)
+    age, _ := item["age"].(int)
+    person := Person{name, age}
+    persons = append(persons, person)
+    return persons
+}
+ 
+func addPlace(places []Place, item map[string]interface{}) []Place {
+    city, _ := item["city"].(string)
+    country, _ := item["city"].(string)
+    place := Place{city, country}
+    places = append(places, place)
+    return places
+}
+ 
+// Yöntem 2: 'Mixed Type' struct'ı
+ 
+type Mixed struct {
+    Name    string `json:"name"`
+    Age     int    `json:"age"`
+    City    string `json:"city"`
+    Country string `json:"country"`
+}
+ 
+func SolutionTwo(jsonStr []byte) ([]Person, []Place) {
+    persons := []Person{}
+    places := []Place{}
+    var data map[string][]Mixed
+    err := json.Unmarshal(jsonStr, &data)
+    if err != nil {
+        fmt.Println(err)
+        return persons, places
+    }
+ 
+    for i := range data["things"] {
+        item := data["things"][i]
+        if item.Name != "" {
+            persons = append(persons, Person{item.Name, item.Age})
+        } else {
+            places = append(places, Place{item.City, item.Country})
+        }
+    }
+    return persons, places
+}
+ 
+// Yöntem 3 : json.RawMessage
+ 
+func SolutionThree(jsonStr []byte) ([]Person, []Place) {
+    people := []Person{}
+    places := []Place{}
+    var data map[string][]json.RawMessage
+    err := json.Unmarshal(jsonStr, &data)
+    if err != nil {
+        fmt.Println(err)
+        return people, places
+    }
+    for _, thing := range data["things"] {
+        people = addPersonThree(thing, people)
+        places = addPlaceThree(thing, places)
+    }
+    return people, places
+}
+ 
+func addPersonThree(thing json.RawMessage, people []Person) []Person {
+    person := Person{}
+    if err := json.Unmarshal(thing, &person); err != nil {
+        fmt.Println(err)
+    } else {
+        if person != *new(Person) {
+            people = append(people, person)
+        }
+    }
+ 
+    return people
+}
+ 
+func addPlaceThree(thing json.RawMessage, places []Place) []Place {
+    place := Place{}
+    if err := json.Unmarshal(thing, &place); err != nil {
+        fmt.Println(err)
+    } else {
+        if place != *new(Place) {
+            places = append(places, place)
+        }
+    }
+ 
+    return places
+}
